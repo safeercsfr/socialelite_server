@@ -30,7 +30,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: 'http://localhost:3000'
+        origin: 'https://main.d19wh691p3ep2l.amplifyapp.com'
     }
 });
 app.use(express.json());
@@ -97,5 +97,5 @@ io.on('connection', (socket) => {
 
 // MONGOOSE SETUP
 connectDB();
-const PORT = process.env.PORT || 5001;
+const PORT = 3000|| 5001;
 httpServer.listen(PORT, () => console.log(`Server Running Port:${PORT}`));
