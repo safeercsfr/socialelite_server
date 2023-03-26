@@ -9,7 +9,7 @@ import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
 import connectDB from "./utils/mongodb.js";
-import { upload } from './utils/multer.js';
+import { upload } from "./utils/multer.js";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
@@ -19,8 +19,8 @@ import { register } from "./controllers/auth.js";
 import { updateProPic } from "./controllers/auth.js";
 import { createPost } from "./controllers/posts.js";
 import { verifyToken } from "./middlleware/auth.js";
-import { createServer } from 'http';
-import { Server } from 'socket.io';
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 // CONFIGURATIONS
 const __filename = fileURLToPath(import.meta.url);
@@ -29,9 +29,16 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-    cors: {
-        origin: 'https://main.dznkokvbmgz2z.amplifyapp.com'
-    }
+  cors: {
+    origin: "https://main.dznkokvbmgz2z.amplifyapp.com",
+  },
+});
+app.use(function (req, res, next) {
+  res.header(
+    "Access-Control-Allow-Origin",
+    "https://main.dznkokvbmgz2z.amplifyapp.com"
+  );
+  next();
 });
 app.use(express.json());
 app.use(helmet());
@@ -54,48 +61,47 @@ app.use("/posts", postRoutes);
 app.use("/messages", messageRoutes);
 app.use("/converstations", converstationRoutes);
 
-let users = []
+let users = [];
 
 const addUser = (urId, socketId) => {
-    !users.some(user => user.urId === urId) &&
-        users.push({ urId, socketId });
-}
+  !users.some((user) => user.urId === urId) && users.push({ urId, socketId });
+};
 
 const removeUser = (socketId) => {
-    users = users.filter(user => user.socketId !== socketId)
-}
+  users = users.filter((user) => user.socketId !== socketId);
+};
 
 const getUser = (id) => {
-    return users.find(user => user.urId === id)
-}
+  return users.find((user) => user.urId === id);
+};
 
-io.on('connection', (socket) => {
-    console.log('connection');
-    // take urId and socketId from user
-    socket.on('addUser', urId => {
-        console.log('add new connection');
-        addUser(urId, socket.id);
-        io.emit('getUsers', users)
-    })
-    // Send and Get message
-    socket.on('sendMessage', ({ senderId, receiverId, text }) => {
-        const user = getUser(receiverId);
-        console.log('new message');
-        io.to(user?.socketId).emit('getMessage', {
-            senderId, text
-        })
-    })
+io.on("connection", (socket) => {
+  console.log("connection");
+  // take urId and socketId from user
+  socket.on("addUser", (urId) => {
+    console.log("add new connection");
+    addUser(urId, socket.id);
+    io.emit("getUsers", users);
+  });
+  // Send and Get message
+  socket.on("sendMessage", ({ senderId, receiverId, text }) => {
+    const user = getUser(receiverId);
+    console.log("new message");
+    io.to(user?.socketId).emit("getMessage", {
+      senderId,
+      text,
+    });
+  });
 
-    // Disconnect
-    socket.on('disconnect', () => {
-        console.log('Dissconnected');
-        removeUser(socket.id)
-        io.emit('getUsers', users)
-    })
-})
-
+  // Disconnect
+  socket.on("disconnect", () => {
+    console.log("Dissconnected");
+    removeUser(socket.id);
+    io.emit("getUsers", users);
+  });
+});
 
 // MONGOOSE SETUP
 connectDB();
-const PORT = 3000|| 5001;
+const PORT = 3000 || 5001;
 httpServer.listen(PORT, () => console.log(`Server Running Port:${PORT}`));
